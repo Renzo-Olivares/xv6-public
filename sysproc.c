@@ -6,6 +6,7 @@
 #include "memlayout.h"
 #include "mmu.h"
 #include "proc.h"
+#include "stddef.h"
 
 int
 sys_fork(void)
@@ -23,7 +24,7 @@ sys_exit(void)
 int
 sys_wait(void)
 {
-  return wait();
+  return wait(NULL);
 }
 
 int
