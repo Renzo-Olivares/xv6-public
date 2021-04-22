@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "stddef.h"
 
 struct {
   struct spinlock lock;
@@ -298,6 +299,14 @@ wait(int *status)
         p->name[0] = 0;
         p->killed = 0;
         p->state = UNUSED;
+
+        // Write terminated child exit status to status argument, if status is non NULL
+        if(status != NULL){
+          status = &(p->exit_status);
+        }else{
+          p->exit_status = 0;
+        }
+
         release(&ptable.lock);
         return pid;
       }
