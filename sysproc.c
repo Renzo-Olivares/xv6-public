@@ -29,10 +29,9 @@ sys_exit(void)
 int
 sys_wait(void)
 {
-  int n = 4; // Note: Find this value dynamically
   int *wait_status;
 
-  if(argptr(0, (char**) &wait_status, n) < 0)
+  if(argptr(0, (char**) &wait_status, sizeof(*wait_status)) < 0)
     return -1;
 
   return wait(wait_status);
