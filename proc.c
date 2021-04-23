@@ -302,7 +302,7 @@ wait(int *status)
 
         // Write terminated child exit status to status argument, if status is non NULL
         if(status != NULL){
-          status = &(p->exit_status);
+          *status = p->exit_status;
         }else{
           p->exit_status = 0;
         }
