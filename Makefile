@@ -181,7 +181,6 @@ UPROGS=\
 	_usertests\
 	_wc\
 	_zombie\
-	_hello\
 	_lab1d\
 
 fs.img: mkfs README $(UPROGS)
