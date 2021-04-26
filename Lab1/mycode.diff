@@ -1,11 +1,98 @@
+diff --git a/.gdbinit.tmpl b/.gdbinit.tmpl
+index f71681a..cf8c111 100644
+--- a/.gdbinit.tmpl
++++ b/.gdbinit.tmpl
+@@ -20,8 +20,5 @@ define hook-stop
+   set $lastcs = $cs
+ end
+ 
+-echo + target remote localhost:1234\n
+-target remote localhost:1234
+-
+ echo + symbol-file kernel\n
+ symbol-file kernel
+diff --git a/.gdbinit.tmpl_org b/.gdbinit.tmpl_org
+new file mode 100644
+index 0000000..f71681a
+--- /dev/null
++++ b/.gdbinit.tmpl_org
+@@ -0,0 +1,27 @@
++set $lastcs = -1
++
++define hook-stop
++  # There doesn't seem to be a good way to detect if we're in 16- or
++  # 32-bit mode, but in 32-bit mode we always run with CS == 8 in the
++  # kernel and CS == 35 in user space
++  if $cs == 8 || $cs == 35
++    if $lastcs != 8 && $lastcs != 35
++      set architecture i386
++    end
++    x/i $pc
++  else
++    if $lastcs == -1 || $lastcs == 8 || $lastcs == 35
++      set architecture i8086
++    end
++    # Translate the segment:offset into a physical address
++    printf "[%4x:%4x] ", $cs, $eip
++    x/i $cs*16+$eip
++  end
++  set $lastcs = $cs
++end
++
++echo + target remote localhost:1234\n
++target remote localhost:1234
++
++echo + symbol-file kernel\n
++symbol-file kernel
+diff --git a/.vscode/launch.json b/.vscode/launch.json
+new file mode 100644
+index 0000000..461f32e
+--- /dev/null
++++ b/.vscode/launch.json
+@@ -0,0 +1,33 @@
++{
++    // Use IntelliSense to learn about possible attributes.
++    // Hover to view descriptions of existing attributes.
++    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
++    "version": "0.2.0",
++    "configurations": [
++        {
++            "name": "(gdb) Launch",
++            "type": "cppdbg",
++            "request": "launch",
++            "program": "kernel",
++            "args": [],
++            "stopAtEntry": false,
++            "cwd": "${workspaceFolder}",
++            "environment": [],
++            "externalConsole": false,
++            "MIMode": "gdb",
++            "miDebuggerServerAddress": "localhost:26000",
++            // "miDebuggerPath": "/usr/bin/gdb",
++            "setupCommands": [
++                {
++                    "description": "Enable pretty-printing for gdb",
++                    "text": "-enable-pretty-printing",
++                    "ignoreFailures": true
++                }
++            ],
++            "logging": {
++                // "engineLogging": true,
++                // "programOutput": true,
++            }
++        }
++    ]
++}
+\ No newline at end of file
 diff --git a/Makefile b/Makefile
-index 09d790c..135ba6f 100644
+index 09d790c..e8beed6 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -181,6 +181,7 @@ UPROGS=\
+@@ -181,6 +181,8 @@ UPROGS=\
  	_usertests\
  	_wc\
  	_zombie\
++	_lab1ab\
 +	_lab1d\
  
  fs.img: mkfs README $(UPROGS)
@@ -212,6 +299,36 @@ index 364f6af..875916c 100644
 -  exit();
 +  exit(0);
  }
+diff --git a/lab1ab.c b/lab1ab.c
+new file mode 100644
+index 0000000..65c8db6
+--- /dev/null
++++ b/lab1ab.c
+@@ -0,0 +1,23 @@
++#include "types.h"
++#include "user.h"
++
++int main (int argc, char **argv)
++{
++    int status;
++    int pid;
++
++    pid = fork();
++    if(pid == 0){
++        printf(1, "Hello from child\n");
++        exit(99);
++    }
++
++    if(pid){
++        printf(1,"Hello from parent\n");
++        wait(&status);
++        printf(1,"Child has terminated\n");
++        printf(1, "Child exit status %d\n", status);
++    }
++
++    exit(0);
++}
+\ No newline at end of file
 diff --git a/lab1d.c b/lab1d.c
 new file mode 100644
 index 0000000..b8793b4
