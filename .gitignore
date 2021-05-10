@@ -14,5 +14,3 @@ kernel
 kernelmemfs
 mkfs
 .gdbinit
-.idea
-notes.md
