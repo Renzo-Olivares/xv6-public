@@ -89,6 +89,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->prior_val = 0;
 
   release(&ptable.lock);
 
@@ -200,6 +201,7 @@ fork(void)
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;
+  np->prior_val = curproc->prior_val;
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
@@ -381,6 +383,14 @@ scheduler(void)
     release(&ptable.lock);
 
   }
+}
+
+int
+set_prior(int prior_lvl)
+{
+    struct proc *p = myproc();
+    p->prior_val = prior_lvl;
+    return p->prior_val;
 }
 
 // Enter scheduler.  Must hold only ptable.lock
