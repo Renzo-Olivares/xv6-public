@@ -50,8 +50,9 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
   int prior_val;
-  int t_finish;
-  int t_start;
+  uint t_finish;
+  uint t_start;
+  uint burst_tick;
   int burst_time;
 };
 

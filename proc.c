@@ -264,6 +264,11 @@ exit(void)
     }
   }
 
+  // Save finish time to current proccess.
+  acquire(&tickslock);
+  curproc->t_finish = ticks;
+  release(&tickslock);
+
   // Jump into the scheduler, never to return.
   curproc->state = ZOMBIE;
   sched();
@@ -360,6 +365,12 @@ scheduler(void)
 
     c->proc = 0;
 
+    acquire(&tickslock);
+    if(ticks > next_p->burst_tick){
+      next_p->burst_time = ticks;
+      next_p->burst_time++;
+    }
+    release(&tickslock);
     if(next_p->prior_val < 31)
       next_p->prior_val = next_p->prior_val + 1;//decrease priority for running
 
@@ -373,6 +384,7 @@ set_prior(int prior_lvl)
 {
     struct proc *p = myproc();
     p->prior_val = prior_lvl;
+    yield();
     return p->prior_val;
 }
 
