@@ -236,6 +236,19 @@ exit(void)
 
   if(curproc == initproc)
     panic("init exiting");
+    
+  // Save finish time to current proccess.
+  acquire(&tickslock);
+  curproc->t_finish = ticks;
+  release(&tickslock);
+
+  cprintf("\nproc name: %s\n", curproc->name);
+  cprintf("Start time : %d\n", curproc->t_start);
+  cprintf("End time : %d\n", curproc->t_finish);
+  cprintf("Burst time : %d\n", curproc->burst_time);
+  cprintf("Burst tick : %d\n", curproc->burst_tick);
+  cprintf("Turnaround time : %d\n", curproc->t_finish - curproc->t_start);
+  cprintf("Waiting time : %d\n", (curproc->t_finish - curproc->t_start) - curproc->burst_tick);
 
   // Close all open files.
   for(fd = 0; fd < NOFILE; fd++){
@@ -263,11 +276,6 @@ exit(void)
         wakeup1(initproc);
     }
   }
-
-  // Save finish time to current proccess.
-  acquire(&tickslock);
-  curproc->t_finish = ticks;
-  release(&tickslock);
 
   // Jump into the scheduler, never to return.
   curproc->state = ZOMBIE;
