@@ -326,6 +326,7 @@ void
 scheduler(void)
 {
   struct proc *p;
+  struct proc *next_p;
   struct cpu *c = mycpu();
   c->proc = 0;
   
@@ -333,53 +334,35 @@ scheduler(void)
     // Enable interrupts on this processor.
     sti();
 
-    // Loop over process table looking for process to run.
+    // Loop over process table looking for process with highest priority to run.
     acquire(&ptable.lock);
 
-    struct proc *next_p;
-
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    for(p = ptable.proc, next_p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
 
-      if(next_p == NULL){
+      if(next_p == p)
+        continue;
+      
+      if(p->prior_val < next_p->prior_val){
         next_p = p;
       }else{
-        if(next_p->prior_val < p->prior_val){
-          next_p = p;
-        }
+        if(p->prior_val > 0)
+          p->prior_val = p->prior_val - 1; //increase priority for waiting
       }
     }
 
     c->proc = next_p;
     switchuvm(next_p);
     next_p->state = RUNNING;
-
     swtch(&(c->scheduler), next_p->context);
     switchkvm();
 
     c->proc = 0;
 
+    if(next_p->prior_val < 31)
+      next_p->prior_val = next_p->prior_val + 1;//decrease priority for running
 
-
-    // for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    //   if(p->state != RUNNABLE)
-    //     continue;
-
-    //   // Switch to chosen process.  It is the process's job
-    //   // to release ptable.lock and then reacquire it
-    //   // before jumping back to us.
-    //   c->proc = p;
-    //   switchuvm(p);
-    //   p->state = RUNNING;
-
-    //   swtch(&(c->scheduler), p->context);
-    //   switchkvm();
-
-    //   // Process is done running for now.
-    //   // It should have changed its p->state before coming back.
-    //   c->proc = 0;
-    // }
     release(&ptable.lock);
 
   }
