@@ -341,6 +341,7 @@ scheduler(void)
   struct proc *p;
   struct proc *next_p;
   struct cpu *c = mycpu();
+  int aging_flag = 0;
   c->proc = 0;
   
   for(;;){
@@ -360,7 +361,7 @@ scheduler(void)
       if(p->prior_val < next_p->prior_val){
         next_p = p;
       }else{
-        if(p->prior_val > 0){
+        if(p->prior_val > 0 && aging_flag){
           if(strncmp(p->name,"lab2a",5) == 0 || strncmp(p->name,"lab2b",5) == 0 || strncmp(p->name,"lab2c",5) == 0)
             cprintf("(Priority raised before) - Process name: %s : %d\n", p->name, p->prior_val);
           p->prior_val = p->prior_val - 1; //increase priority for waiting
@@ -384,7 +385,7 @@ scheduler(void)
       next_p->burst_tick++;
     }
     release(&tickslock);
-    if(next_p->prior_val < 31){
+    if(next_p->prior_val < 31 && aging_flag){
       if(strncmp(next_p->name,"lab2a",5) == 0 || strncmp(next_p->name,"lab2b",5) == 0 || strncmp(next_p->name,"lab2c",5) == 0)
         cprintf("(Priority lowered before) - Process name: %s : %d\n", next_p->name, next_p->prior_val);
       next_p->prior_val = next_p->prior_val + 1;//decrease priority for running
