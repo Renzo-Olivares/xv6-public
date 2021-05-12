@@ -2,7 +2,7 @@
 #include "user.h"
 int main (int argc, char **argv)
 {
-    int prir = set_prior(20);
+    int prir = set_prior(10);
     printf(1, "PRIORITY: %d\n", prir);
     int i,k;
     for(i = 0; i < 43000; i++){
