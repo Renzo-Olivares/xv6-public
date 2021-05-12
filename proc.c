@@ -89,7 +89,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
-  p->prior_val = 31;
+  p->prior_val = 0;
 
   release(&ptable.lock);
 
@@ -327,6 +327,20 @@ wait(void)
   }
 }
 
+// Rule 5: After some period of time S, move all the jobs in the system to the topmost queue. 
+void maximize_priorities(void){
+  struct proc *p;
+
+  acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->state != RUNNABLE)
+      continue;
+
+    p->prior_val = 0; // Set to highest priority.
+  }
+  release(&ptable.lock);
+}
+
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -343,8 +357,21 @@ scheduler(void)
   struct cpu *c = mycpu();
   int aging_flag = 0;
   c->proc = 0;
+
+  uint start_time;
+  acquire(&tickslock);
+  start_time = ticks;
+  release(&tickslock);
+  uint current_time;
   
   for(;;){
+    acquire(&tickslock);
+    current_time = ticks;
+    release(&tickslock);
+    
+    if(current_time - start_time < 1000 && current_time - start_time > 975)
+      maximize_priorities();
+
     // Enable interrupts on this processor.
     sti();
 
