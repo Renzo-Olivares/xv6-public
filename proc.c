@@ -358,21 +358,21 @@ scheduler(void)
   int aging_flag = 0;
   c->proc = 0;
 
-  // uint start_time;
-  // acquire(&tickslock);
-  // start_time = ticks;
-  // release(&tickslock);
-  // uint current_time;
+  uint start_time;
+  acquire(&tickslock);
+  start_time = ticks;
+  release(&tickslock);
+  uint current_time;
   
   for(;;){
-    // acquire(&tickslock);
-    // current_time = ticks;
-    // release(&tickslock);
+    acquire(&tickslock);
+    current_time = ticks;
+    release(&tickslock);
 
-    // if(current_time - start_time < 300 && current_time - start_time > 297){
-    //   start_time = current_time;
-    //   maximize_priorities();
-    // }
+    if(current_time - start_time < 300 && current_time - start_time > 297){
+      start_time = current_time;
+      maximize_priorities();
+    }
 
     // Enable interrupts on this processor.
     sti();
