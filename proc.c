@@ -248,7 +248,7 @@ exit(void)
   cprintf("Burst time : %d\n", curproc->burst_time);
   cprintf("Burst tick : %d\n", curproc->burst_tick);
   cprintf("Turnaround time : %d\n", curproc->t_finish - curproc->t_start);
-  cprintf("Waiting time : %d\n", (curproc->t_finish - curproc->t_start) - curproc->burst_tick);
+  cprintf("Waiting time : %d\n", (curproc->t_finish - curproc->t_start) - curproc->burst_time);
 
   // Close all open files.
   for(fd = 0; fd < NOFILE; fd++){
