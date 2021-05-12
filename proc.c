@@ -341,7 +341,7 @@ scheduler(void)
   struct proc *p;
   struct proc *next_p;
   struct cpu *c = mycpu();
-  int aging_flag = 0;
+  int aging_flag = 1;
   c->proc = 0;
   
   for(;;){
@@ -358,39 +358,45 @@ scheduler(void)
       if(next_p == p)
         continue;
       
-      if(p->prior_val < next_p->prior_val){
+      if(p->prior_val < next_p->prior_val)
         next_p = p;
-      }else{
-        if(p->prior_val > 0 && aging_flag){
-          if(strncmp(p->name,"lab2a",5) == 0 || strncmp(p->name,"lab2b",5) == 0 || strncmp(p->name,"lab2c",5) == 0)
-            cprintf("(Priority raised before) - Process name: %s : %d\n", p->name, p->prior_val);
+    }
+
+    int prior_level = next_p->prior_val;
+
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->state != RUNNABLE)
+        continue;
+
+      if(p->prior_val != prior_level){
+        if(p->prior_val > 0 && aging_flag)
           p->prior_val = p->prior_val - 1; //increase priority for waiting
-          if(strncmp(p->name,"lab2a",5) == 0 || strncmp(p->name,"lab2b",5) == 0 || strncmp(p->name,"lab2c",5) == 0)
-            cprintf("(Priority raised after) - Process name: %s : %d\n", p->name, p->prior_val);
-        }
+        continue;
       }
-    }
 
-    c->proc = next_p;
-    switchuvm(next_p);
-    next_p->state = RUNNING;
-    swtch(&(c->scheduler), next_p->context);
-    switchkvm();
+      // Switch to chosen process.  It is the process's job
+      // to release ptable.lock and then reacquire it
+      // before jumping back to us.
+      c->proc = p;
+      switchuvm(p);
+      p->state = RUNNING;
 
-    c->proc = 0;
+      swtch(&(c->scheduler), p->context);
+      switchkvm();
 
-    acquire(&tickslock);
-    if(ticks > next_p->burst_time){
-      next_p->burst_time = ticks;
-      next_p->burst_tick++;
-    }
-    release(&tickslock);
-    if(next_p->prior_val < 31 && aging_flag){
-      if(strncmp(next_p->name,"lab2a",5) == 0 || strncmp(next_p->name,"lab2b",5) == 0 || strncmp(next_p->name,"lab2c",5) == 0)
-        cprintf("(Priority lowered before) - Process name: %s : %d\n", next_p->name, next_p->prior_val);
-      next_p->prior_val = next_p->prior_val + 1;//decrease priority for running
-      if(strncmp(next_p->name,"lab2a",5) == 0 || strncmp(next_p->name,"lab2b",5) == 0 || strncmp(next_p->name,"lab2c",5) == 0)
-        cprintf("(Priority lowered after) - Process name: %s : %d\n", next_p->name, next_p->prior_val);
+      if(p->prior_val < 31 && aging_flag)
+        p->prior_val = p->prior_val + 1;//decrease priority for running
+
+      acquire(&tickslock);
+      if(ticks > p->burst_time){
+        p->burst_time = ticks;
+        p->burst_tick++;
+      }
+      release(&tickslock);
+
+      // Process is done running for now.
+      // It should have changed its p->state before coming back.
+      c->proc = 0;
     }
 
     release(&ptable.lock);
