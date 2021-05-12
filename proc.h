@@ -52,8 +52,8 @@ struct proc {
   int prior_val;
   uint t_finish;
   uint t_start;
-  uint burst_tick;
-  int burst_time;
+  int burst_tick;
+  uint burst_time;
 };
 
 // Process memory is laid out contiguously, low addresses first:

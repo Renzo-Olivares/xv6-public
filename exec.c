@@ -96,9 +96,9 @@ exec(char *path, char **argv)
   // Initialize process start time and burst time and burst ticks.
   acquire(&tickslock);
   curproc->t_start = ticks;
-  curproc->burst_time = ticks;
+  curproc->burst_tick = ticks;
   release(&tickslock);
-  curproc->burst_tick = 0;
+  curproc->burst_time = 0;
 
   // Commit to the user image.
   oldpgdir = curproc->pgdir;

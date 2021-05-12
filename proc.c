@@ -358,21 +358,21 @@ scheduler(void)
   int aging_flag = 0;
   c->proc = 0;
 
-  uint start_time;
-  acquire(&tickslock);
-  start_time = ticks;
-  release(&tickslock);
-  uint current_time;
+  // uint start_time;
+  // acquire(&tickslock);
+  // start_time = ticks;
+  // release(&tickslock);
+  // uint current_time;
   
   for(;;){
-    acquire(&tickslock);
-    current_time = ticks;
-    release(&tickslock);
+    // acquire(&tickslock);
+    // current_time = ticks;
+    // release(&tickslock);
 
-    if(current_time - start_time < 100 && current_time - start_time > 97){
-      start_time = current_time;
-      maximize_priorities();
-    }
+    // if(current_time - start_time < 300 && current_time - start_time > 297){
+    //   start_time = current_time;
+    //   maximize_priorities();
+    // }
 
     // Enable interrupts on this processor.
     sti();
@@ -397,7 +397,10 @@ scheduler(void)
       if(p->state != RUNNABLE)
         continue;
 
-      if(p->prior_val != prior_level){
+      if(p->prior_val > prior_level){
+        if(strncmp(p->name, "lab2", 4) == 0){
+          cprintf("%s is waiting\n", p->name);
+        }
         if(p->prior_val > 0 && aging_flag)
           p->prior_val = p->prior_val - 1; //increase priority for waiting
         continue;
@@ -413,13 +416,17 @@ scheduler(void)
       swtch(&(c->scheduler), p->context);
       switchkvm();
 
+      if(strncmp(p->name, "lab2", 4) == 0){
+        cprintf("%s is running\n", p->name);
+      }
+
       if(p->prior_val < 31 && aging_flag)
         p->prior_val = p->prior_val + 1;//decrease priority for running
 
       acquire(&tickslock);
-      if(ticks > p->burst_time){
-        p->burst_time = ticks;
-        p->burst_tick++;
+      if(ticks > p->burst_tick){
+        p->burst_tick = ticks;
+        p->burst_time++;
       }
       release(&tickslock);
 
