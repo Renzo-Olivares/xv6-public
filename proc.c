@@ -89,7 +89,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
-  p->prior_val = 0;
+  p->prior_val = 31;
 
   release(&ptable.lock);
 
@@ -341,7 +341,7 @@ scheduler(void)
   struct proc *p;
   struct proc *next_p;
   struct cpu *c = mycpu();
-  int aging_flag = 1;
+  int aging_flag = 0;
   c->proc = 0;
   
   for(;;){
