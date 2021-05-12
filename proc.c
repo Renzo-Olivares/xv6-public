@@ -368,9 +368,11 @@ scheduler(void)
     acquire(&tickslock);
     current_time = ticks;
     release(&tickslock);
-    
-    if(current_time - start_time < 1000 && current_time - start_time > 975)
+
+    if(current_time - start_time < 100 && current_time - start_time > 97){
+      start_time = current_time;
       maximize_priorities();
+    }
 
     // Enable interrupts on this processor.
     sti();
