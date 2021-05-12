@@ -374,9 +374,9 @@ scheduler(void)
     c->proc = 0;
 
     acquire(&tickslock);
-    if(ticks > next_p->burst_tick){
+    if(ticks > next_p->burst_time){
       next_p->burst_time = ticks;
-      next_p->burst_time++;
+      next_p->burst_tick++;
     }
     release(&tickslock);
     if(next_p->prior_val < 31)
