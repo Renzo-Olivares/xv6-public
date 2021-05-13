@@ -443,10 +443,11 @@ scheduler(void)
 int
 set_prior(int prior_lvl)
 {
-    struct proc *p = myproc();
-    p->prior_val = prior_lvl;
+    acquire(&ptable.lock);
+    myproc()->prior_val = prior_lvl;
+    release(&ptable.lock);
     yield();
-    return p->prior_val;
+    return myproc()->prior_val;
 }
 
 // Enter scheduler.  Must hold only ptable.lock
