@@ -353,7 +353,6 @@ void
 scheduler(void)
 {
   struct proc *p;
-  struct proc *next_p;
   struct cpu *c = mycpu();
   int aging_flag = 0;
   c->proc = 0;
@@ -379,28 +378,23 @@ scheduler(void)
 
     // Loop over process table looking for process with highest priority to run.
     acquire(&ptable.lock);
-
-    for(p = ptable.proc, next_p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    int prior_level = 31;
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
 
-      if(next_p == p)
-        continue;
-      
-      if(p->prior_val < next_p->prior_val)
-        next_p = p;
+      if(p->prior_val < prior_level) {
+          prior_level = p->prior_val;
+      }
     }
 
-    int prior_level = next_p->prior_val;
+
 
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
 
       if(p->prior_val > prior_level){
-        if(strncmp(p->name, "lab2", 4) == 0){
-          cprintf("%s is waiting\n", p->name);
-        }
         if(p->prior_val > 0 && aging_flag)
           p->prior_val = p->prior_val - 1; //increase priority for waiting
         continue;
@@ -415,10 +409,6 @@ scheduler(void)
 
       swtch(&(c->scheduler), p->context);
       switchkvm();
-
-      if(strncmp(p->name, "lab2", 4) == 0){
-        cprintf("%s is running\n", p->name);
-      }
 
       if(p->prior_val < 31 && aging_flag)
         p->prior_val = p->prior_val + 1;//decrease priority for running
