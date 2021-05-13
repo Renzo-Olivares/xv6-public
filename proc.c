@@ -327,6 +327,20 @@ wait(void)
   }
 }
 
+// Rule 5: After some period of time S, move all the jobs in the system to the topmost queue. 
+void maximize_priorities(void){
+  struct proc *p;
+
+  acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->state != RUNNABLE)
+      continue;
+
+    p->prior_val = 0; // Set to highest priority.
+  }
+  release(&ptable.lock);
+}
+
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -340,10 +354,25 @@ scheduler(void)
 {
   struct proc *p;
   struct cpu *c = mycpu();
-  int aging_flag = 1;
+  int aging_flag = 0;
   c->proc = 0;
+
+  uint start_time;
+  acquire(&tickslock);
+  start_time = ticks;
+  release(&tickslock);
+  uint current_time;
   
   for(;;){
+    acquire(&tickslock);
+    current_time = ticks;
+    release(&tickslock);
+
+    if(current_time - start_time < 4000 && current_time - start_time > 3997){
+      start_time = current_time;
+      maximize_priorities();
+    }
+
     // Enable interrupts on this processor.
     sti();
 
@@ -367,7 +396,7 @@ scheduler(void)
 
       if(p->prior_val > prior_level){
         if(p->prior_val > 0 && aging_flag)
-          p->prior_val = p->prior_val - 1; //increase priority for waiting
+          p->prior_val--; //increase priority for waiting
         continue;
       }
 
@@ -386,7 +415,7 @@ scheduler(void)
       c->proc = 0;
 
       if(p->prior_val < 31 && aging_flag)
-        p->prior_val = p->prior_val + 1;//decrease priority for running
+        p->prior_val++;//decrease priority for running
 
       acquire(&tickslock);
       if(ticks > p->burst_tick){
