@@ -327,20 +327,6 @@ wait(void)
   }
 }
 
-// Rule 5: After some period of time S, move all the jobs in the system to the topmost queue. 
-void maximize_priorities(void){
-  struct proc *p;
-
-  acquire(&ptable.lock);
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    if(p->state != RUNNABLE)
-      continue;
-
-    p->prior_val = 0; // Set to highest priority.
-  }
-  release(&ptable.lock);
-}
-
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -354,31 +340,17 @@ scheduler(void)
 {
   struct proc *p;
   struct cpu *c = mycpu();
-  int aging_flag = 0;
+  int aging_flag = 1;
   c->proc = 0;
-
-  uint start_time;
-  acquire(&tickslock);
-  start_time = ticks;
-  release(&tickslock);
-  uint current_time;
   
   for(;;){
-    acquire(&tickslock);
-    current_time = ticks;
-    release(&tickslock);
-
-    if(current_time - start_time < 300 && current_time - start_time > 297){
-      start_time = current_time;
-      maximize_priorities();
-    }
-
     // Enable interrupts on this processor.
     sti();
 
     // Loop over process table looking for process with highest priority to run.
     acquire(&ptable.lock);
     int prior_level = 31;
+
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
@@ -387,8 +359,6 @@ scheduler(void)
           prior_level = p->prior_val;
       }
     }
-
-
 
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
@@ -410,6 +380,10 @@ scheduler(void)
       swtch(&(c->scheduler), p->context);
       switchkvm();
 
+      // Process is done running for now.
+      // It should have changed its p->state before coming back.
+      c->proc = 0;
+
       if(p->prior_val < 31 && aging_flag)
         p->prior_val = p->prior_val + 1;//decrease priority for running
 
@@ -419,10 +393,6 @@ scheduler(void)
         p->burst_time++;
       }
       release(&tickslock);
-
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      c->proc = 0;
     }
 
     release(&ptable.lock);
