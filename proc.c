@@ -354,7 +354,7 @@ scheduler(void)
 {
   struct proc *p;
   struct cpu *c = mycpu();
-  int aging_flag = 0;
+  int aging_flag = 1; //set to 0 to test starvation.
   c->proc = 0;
 
   uint start_time;
@@ -370,7 +370,7 @@ scheduler(void)
 
     if(current_time - start_time < 4000 && current_time - start_time > 3997){
       start_time = current_time;
-      maximize_priorities();
+      maximize_priorities(); //comment out to test starvation.
     }
 
     // Enable interrupts on this processor.

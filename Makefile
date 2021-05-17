@@ -185,6 +185,7 @@ UPROGS=\
 	_lab2a\
 	_lab2b\
 	_lab2c\
+	_lab2_starvation\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
